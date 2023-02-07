@@ -10,19 +10,17 @@ repository = "https://github.com/SBentley/qvd-utils"
 keywords = ["python", "rust", "qlik", "sense", "qvd"]
 
 
-[lib]
-name = "qvd"
-crate-type = ["cdylib"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# [lib]
+# name = "qvd"
+# crate-type = ["cdylib"]
+# # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0.117", features = ["derive"] }
-quick-xml = { version = "0.20.0", features = ["serialize"]}
 bitvec = "0.19.4"
-
-[dependencies.pyo3]
-version = "0.12.3"
-features = ["extension-module"]
+chrono = "0.4.23"
+pyo3 = { version = "0.18", features = ["extension-module"] }
+quick-xml = { version = "0.27.0", features = ["serialize"]}
+serde = { version = "1.0", features = ["derive"] }
 
 [package.metadata.maturin]
 requires-dist = ["pandas>=1.1.4"]

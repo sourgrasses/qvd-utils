@@ -2,7 +2,7 @@ use bitvec::prelude::*;
 use pyo3::wrap_pyfunction;
 use pyo3::{prelude::*, types::PyDict};
 use quick_xml::de::from_str;
-use qvd_structure::{QvdFieldHeader, QvdTableHeader};
+use qvd_structure::{QvdFieldHeader, QvdTableHeader, QvdSymbol};
 use std::io::SeekFrom;
 use std::io::{self, Read};
 use std::path::Path;
@@ -49,6 +49,11 @@ fn read_qvd(py: Python, file_name: String) -> PyResult<Py<PyDict>> {
     Ok(dict.into())
 }
 
+#[pyfunction]
+fn read_qvd_typed(py: Python, file_name: String) -> PyResult<Py<PyDict>> {
+    unimplemented!()
+}
+
 fn read_qvd_to_buf(mut f: File, binary_section_offset: usize) -> Vec<u8> {
     f.seek(SeekFrom::Start(binary_section_offset as u64))
         .unwrap();
@@ -69,6 +74,10 @@ fn match_symbols_with_indexes(symbols: &[Option<String>], pointers: &[i64]) -> V
     cols
 }
 
+fn get_symbol<'a>(buf: &'a [u8], field: &QvdFieldHeader) -> QvdSymbol<'a> {
+    unimplemented!()
+}
+
 fn get_symbols_as_strings(buf: &[u8], field: &QvdFieldHeader) -> Vec<Option<String>> {
     let start = field.offset;
     let end = start + field.length;
@@ -83,7 +92,7 @@ fn get_symbols_as_strings(buf: &[u8], field: &QvdFieldHeader) -> Vec<Option<Stri
             0 => {
                 // Strings are null terminated
                 // Read bytes from start fo string (string_start) up to current byte.
-                let utf8_bytes = buf[string_start..i].to_vec().to_owned();
+                let utf8_bytes = buf[string_start..i].to_vec();
                 let value = String::from_utf8(utf8_bytes).unwrap_or_else(|_| {
                     panic!(
                     "Error parsing string value in field: {}, field offset: {}, byte offset: {}",
@@ -95,17 +104,15 @@ fn get_symbols_as_strings(buf: &[u8], field: &QvdFieldHeader) -> Vec<Option<Stri
             }
             1 => {
                 // 4 byte integer
-                let target_bytes = buf[i + 1..i + 5].to_vec();
-                let byte_array: [u8; 4] = target_bytes.try_into().unwrap();
-                let numeric_value = i32::from_le_bytes(byte_array);
+                let (bytes, _) = buf[i + 1..].split_at(std::mem::size_of::<i32>());
+                let numeric_value = i32::from_le_bytes(bytes.try_into().unwrap());
                 strings.push(Some(numeric_value.to_string()));
                 i += 5;
             }
             2 => {
                 // 4 byte double
-                let target_bytes = buf[i + 1..i + 9].to_vec();
-                let byte_array: [u8; 8] = target_bytes.try_into().unwrap();
-                let numeric_value = f64::from_le_bytes(byte_array);
+                let (bytes, _) = buf[i + 1..].split_at(std::mem::size_of::<f64>());
+                let numeric_value = f64::from_le_bytes(bytes.try_into().unwrap());
                 strings.push(Some(numeric_value.to_string()));
                 i += 9;
             }
